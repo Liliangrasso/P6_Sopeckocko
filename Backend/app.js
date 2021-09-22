@@ -4,9 +4,15 @@ const mongoose = require('mongoose');
 const app = express();
 const sauceRoutes = require('./routes/sauces');
 const userRoutes = require('./routes/user');
+const env = require("dotenv").config()
 const path = require('path');
 
-mongoose.connect('mongodb+srv://Lilian:e84757013@cluster0.qnbnd.mongodb.net/test?retryWrites=true&w=majority',
+
+let user = process.env.DB_USER;
+let password = process.env.DB_PASSWORD;
+let database = process.env.DB
+
+mongoose.connect(`mongodb+srv://${user}:${password}@cluster0.qnbnd.mongodb.net/${database}?retryWrites=true&w=majority`,
     {
         useNewUrlParser: true,
         useUnifiedTopology: true

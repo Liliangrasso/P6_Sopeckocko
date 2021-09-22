@@ -2,24 +2,36 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const checkPassword = require('./Password')
+
+// Regexp Pour le format du mail & du mot de passe
+const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
+const regexInject = /[\=\'\'\{\}]/; // ne doit pas contenir les caractères suivants : =, ", ", {, }
 
 exports.signup = (req, res, next) => {
-    if (checkPassword.CheckPassword(req.body.password)) {
-        bcrypt.hash(req.body.password, 10)
-            .then(hash => {
-                const user = new User({
-                    email: req.body.email,
-                    password: hash
-                });
-                user.save()
-                    .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-                    .catch(error => res.status(400).json({ error }));
-            })
-            .catch(error => res.status(500).json({ error }));
-    } else {
-        return res.status(404).json({ message: 'Le mot de passe doit contenir au moins un nombre, une minuscule, une majuscule et être composé de 6 caractères minimum !' });
+
+    var email = req.body.email;
+    var password = req.body.password;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ 'error': 'email is not valid' });
+    };
+    if (regexInject.test(password)) {
+        return res.status(400).json({ 'error': 'password invalid must no inclue "=}{' });
+    };
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({ 'error': 'password invalid (must length 4 - 8 and include 1 number at least)' });
     }
+    bcrypt.hash(req.body.password, 10)
+        .then(hash => {
+            const user = new User({
+                email: req.body.email,
+                password: hash
+            });
+            user.save()
+                .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
+                .catch(error => res.status(400).json({ error }));
+        })
+        .catch(error => res.status(500).json({ error }));
 };
 
 exports.login = (req, res, next) => {
